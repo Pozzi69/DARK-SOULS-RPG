@@ -1194,6 +1194,16 @@ function resetBattleRuntimeState(){
   G._defeatedEnemies=[];
   G._lastDefeatedEnemy=null;
   G._battleWon=false;
+  G._pendingMove=null;
+  G._pendingMoveIdx=-1;
+  G._pendingCost=0;
+  G._targeting=false;
+  G._movesThisTurn=0;
+  G._isFirstMoveThisTurn=false;
+  G._staminaSpentThisTurn=0;
+  G._enemyUsedHeavy=false;
+  G._staffDiscountUsed=false;
+  G._firstAttackDone=false;
 }
 function npcFightButton(id,label){
   if(!NPC_ROUTE_REGISTRY[id]||isNpcKilled(id))return '';
@@ -2506,11 +2516,14 @@ function showZoneStartEvent(){
 function resetNpcDialogLayout(){
   const screen=document.getElementById('screen-random-event');
   const txt=document.getElementById('re-text');
+  const choices=document.getElementById('re-choices');
   if(screen)screen.classList.remove('npc-dialog');
   if(txt){
     txt.onclick=null;
+    txt.innerHTML='';
     txt.classList.add('ut-done');
   }
+  if(choices)choices.innerHTML='';
   if(G._npcDialogTimer){clearInterval(G._npcDialogTimer);G._npcDialogTimer=null;}
   G._npcDialogState=null;
 }
@@ -2649,7 +2662,9 @@ function clearBattleNpcDialog(){
 }
 function finishBattleNpcDialog(){
   clearBattleNpcDialog();
+  G._npcIntroActive=false;
   G.busy=false;
+  showScreen('battle');
   renderBattle(true);
 }
 function renderBattleNpcDialog(){
@@ -2691,9 +2706,10 @@ function advanceBattleNpcDialog(){
   finishBattleNpcDialog();
 }
 function showNpcBattleIntro(id){
-  const wrap=document.getElementById('battle-arena')||document.getElementById('game-wrap2');
+  const wrap=document.getElementById('game-wrap2')||document.getElementById('battle-arena');
   if(!wrap||!G.enemy)return;
   G.busy=true;
+  G._npcIntroActive=true;
   renderBattle(true);
   clearBattleNpcDialog();
   const box=document.createElement('div');
@@ -2702,6 +2718,7 @@ function showNpcBattleIntro(id){
   box.innerHTML=`
     <div class="battle-npc-dialog-name">${npcName(id)}</div>
     <div class="battle-npc-dialog-text" id="battle-npc-dialog-text"></div>
+    <button type="button" class="battle-npc-dialog-start" onclick="event.stopPropagation();finishBattleNpcDialog()">Inizia combattimento</button>
     <div class="battle-npc-dialog-hint">Clicca per continuare</div>`;
   wrap.appendChild(box);
   G._battleNpcDialogState={html:npcDialogueOnlyHtml(id,'aggro'),typing:false};
